@@ -68,50 +68,52 @@ export default function GamesPage() {
 
   return (
     <AuthGate>
-      <div className="p-6 max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Games</h1>
-          <div className="flex gap-2">
-            <Link className="rounded border px-3 py-1 text-sm" href="/friends">Friends</Link>
-            <button className="rounded border px-3 py-1 text-sm" onClick={logout}>Logout</button>
+      <div className="gradient-bg dot-texture min-h-screen p-6">
+        <div className="bg-surface rounded-3xl shadow-2xl p-8 max-w-4xl mx-auto space-y-8">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-black text-ink">Games</h1>
+            <div className="flex gap-3">
+              <Link className="border-2 border-ink/10 bg-white text-ink font-semibold rounded-2xl px-4 py-2 min-h-[52px] flex items-center focus-ring" href="/friends">Friends</Link>
+              <button className="border-2 border-ink/10 bg-white text-ink font-semibold rounded-2xl px-4 py-2 min-h-[52px] focus-ring" onClick={logout}>Logout</button>
+            </div>
           </div>
+
+          {err && <div className="text-base text-red-600 font-medium">{err}</div>}
+
+          <div className="flex gap-4">
+            <Link className="bg-sunshine text-ink font-black rounded-2xl px-6 py-3 min-h-[52px] shadow-xl hover:opacity-90 flex items-center focus-ring" href="/games/new">New Game</Link>
+          </div>
+
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold text-ink">My Games</h2>
+            {mine.length === 0 ? (
+              <div className="text-base text-ink opacity-70">No games yet.</div>
+            ) : (
+              <ul className="space-y-2">
+                {mine.map((g) => (
+                  <li key={g.id}>
+                    <Link className="text-ink underline text-base font-medium hover:text-purple" href={`/games/${g.id}`}>{g.title}</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold text-ink">Shared With Me</h2>
+            {shared.length === 0 ? (
+              <div className="text-base text-ink opacity-70">Nothing shared with you yet.</div>
+            ) : (
+              <ul className="space-y-2">
+                {shared.map((g) => (
+                  <li key={g.id}>
+                    <Link className="text-ink underline text-base font-medium hover:text-purple" href={`/games/${g.id}`}>{g.title}</Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-
-        {err && <div className="text-sm text-red-600">{err}</div>}
-
-        <div className="flex gap-3">
-          <Link className="rounded bg-black text-white px-4 py-2 text-sm" href="/games/new">New Game</Link>
-        </div>
-
-        <section className="space-y-2">
-          <h2 className="font-medium">My Games</h2>
-          {mine.length === 0 ? (
-            <div className="text-sm opacity-70">No games yet.</div>
-          ) : (
-            <ul className="space-y-1">
-              {mine.map((g) => (
-                <li key={g.id}>
-                  <Link className="underline" href={`/games/${g.id}`}>{g.title}</Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="space-y-2">
-          <h2 className="font-medium">Shared With Me</h2>
-          {shared.length === 0 ? (
-            <div className="text-sm opacity-70">Nothing shared with you yet.</div>
-          ) : (
-            <ul className="space-y-1">
-              {shared.map((g) => (
-                <li key={g.id}>
-                  <Link className="underline" href={`/games/${g.id}`}>{g.title}</Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </div>
     </AuthGate>
   );

@@ -105,29 +105,35 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto space-y-3">
-      <h1 className="text-xl font-semibold">Pick a handle</h1>
-      <p className="text-sm opacity-80">
-        Friends add you by your handle. Example: <b>cool_coder</b>
-      </p>
+    <div className="gradient-bg dot-texture min-h-screen flex items-center justify-center p-6">
+      <div className="bg-surface rounded-3xl shadow-2xl p-8 max-w-md w-full space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-black text-ink">Pick a Handle</h1>
+          <p className="text-base text-ink opacity-80 mt-2">
+            Friends add you by your handle. Example: <b>cool_coder</b>
+          </p>
+        </div>
 
-      <input
-        className="w-full border rounded px-3 py-2"
-        value={handle}
-        onChange={(e) => setHandle(e.target.value)}
-        placeholder="cool_coder"
-        disabled={loading || saving}
-      />
+        <div className="space-y-4">
+          <input
+            className="w-full border-4 border-gray-200 rounded-xl px-4 py-3 text-base font-medium shadow-inner focus-ring"
+            value={handle}
+            onChange={(e) => setHandle(e.target.value)}
+            placeholder="cool_coder"
+            disabled={loading || saving}
+          />
 
-      {err && <div className="text-sm text-red-600">{err}</div>}
+          {err && <div className="text-sm text-red-600 font-medium">{err}</div>}
 
-      <button
-        className="w-full rounded bg-black text-white py-2 text-sm disabled:opacity-50"
-        onClick={save}
-        disabled={loading || saving}
-      >
-        {saving ? "Saving..." : "Save handle"}
-      </button>
+          <button
+            className="w-full bg-sunshine text-ink font-black rounded-2xl min-h-[52px] shadow-xl hover:opacity-90 focus-ring disabled:opacity-50"
+            onClick={save}
+            disabled={loading || saving}
+          >
+            {saving ? "Saving..." : "Save Handle"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

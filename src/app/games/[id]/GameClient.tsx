@@ -182,89 +182,91 @@ export default function GameClient({ gameId }: { gameId: string }) {
 
   return (
     <AuthGate>
-      <div className="p-6 max-w-5xl mx-auto space-y-4">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold">{game?.title ?? "Game"}</h1>
-          <button className="rounded border px-3 py-1 text-sm" onClick={() => (window.location.href = "/games")}>
-            Back
-          </button>
-        </div>
-
-        {/* Errors / status */}
-        {err && <div className="text-sm text-red-600">{err}</div>}
-        {shareMsg && <div className="text-sm opacity-80">{shareMsg}</div>}
-
-        {/* Current revision status */}
-        <div className="text-sm opacity-80">
-          Current: {current ? `${current.version_label} — ${new Date(current.created_at).toLocaleString()}` : "—"}
-          {!isOwner && <span className="ml-2">(read-only)</span>}
-        </div>
-
-        {/* Sandbox directly under Current */}
-        <SandboxPlayer html={preview} />
-
-        {/* Run + Save controls */}
-        <div className="flex gap-2">
-          <button className="rounded border px-3 py-1 text-sm" type="button" onClick={() => setPreview(code)}>
-            Run
-          </button>
-          {isOwner && (
-            <button className="rounded bg-black text-white px-3 py-1 text-sm" type="button" onClick={saveRevision}>
-              Save New Revision
+      <div className="gradient-bg dot-texture min-h-screen p-6">
+        <div className="bg-surface rounded-3xl shadow-2xl p-8 max-w-5xl mx-auto space-y-8">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-black text-ink">{game?.title ?? "Game"}</h1>
+            <button className="border-2 border-ink/10 bg-white text-ink font-semibold rounded-2xl px-4 py-2 min-h-[52px] focus-ring" onClick={() => (window.location.href = "/games")}>
+              Back
             </button>
+          </div>
+
+          {/* Errors / status */}
+          {err && <div className="text-base text-red-600 font-medium">{err}</div>}
+          {shareMsg && <div className="text-base text-ink opacity-80 font-medium">{shareMsg}</div>}
+
+          {/* Current revision status */}
+          <div className="text-base text-ink opacity-80 font-medium">
+            Current: {current ? `${current.version_label} — ${new Date(current.created_at).toLocaleString()}` : "—"}
+            {!isOwner && <span className="ml-2">(read-only)</span>}
+          </div>
+
+          {/* Sandbox directly under Current */}
+          <SandboxPlayer html={preview} />
+
+          {/* Run + Save controls */}
+          <div className="flex gap-4">
+            <button className="border-2 border-ink/10 bg-white text-ink font-semibold rounded-2xl px-4 py-2 min-h-[52px] focus-ring" type="button" onClick={() => setPreview(code)}>
+              Run
+            </button>
+            {isOwner && (
+              <button className="bg-sunshine text-ink font-black rounded-2xl px-4 py-2 min-h-[52px] shadow-xl hover:opacity-90 focus-ring" type="button" onClick={saveRevision}>
+                Save New Revision
+              </button>
+            )}
+          </div>
+
+          {/* Revision title + code box under the sandbox */}
+          {isOwner && (
+            <div className="space-y-4">
+              <input
+                className="w-full border-4 border-gray-200 rounded-xl px-4 py-3 text-base font-medium shadow-inner focus-ring"
+                value={versionLabel}
+                onChange={(e) => setVersionLabel(e.target.value)}
+                placeholder="Revision label (e.g. v2)"
+              />
+              <textarea className="w-full border-4 border-gray-200 rounded-xl px-4 py-3 font-mono text-base h-60 shadow-inner focus-ring" value={code} onChange={(e) => setCode(e.target.value)} />
+            </div>
+          )}
+
+          {/* Revisions list */}
+          <section className="space-y-4">
+            <h2 className="text-2xl font-bold text-ink">Revisions</h2>
+            {revs.length === 0 ? (
+              <div className="text-base text-ink opacity-70">No revisions.</div>
+            ) : (
+              <ul className="space-y-3">
+                {revs.map((r) => (
+                  <li key={r.id} className="flex items-center justify-between gap-4 p-4 bg-surface-light rounded-2xl">
+                    <div className="text-base text-ink">
+                      <div className="font-semibold">{r.version_label}</div>
+                      <div className="opacity-70">{new Date(r.created_at).toLocaleString()}</div>
+                    </div>
+                    {isOwner && (
+                      <button className="border-2 border-ink/10 bg-white text-ink font-semibold rounded-2xl px-4 py-2 min-h-[52px] focus-ring" type="button" onClick={() => restoreRevision(r.id)}>
+                        Restore
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Share */}
+          {isOwner && (
+            <section className="space-y-4">
+              <h2 className="text-2xl font-bold text-ink">Share</h2>
+              <div className="flex gap-4">
+                <input className="flex-1 border-4 border-gray-200 rounded-xl px-4 py-3 text-base font-medium shadow-inner focus-ring" value={shareHandle} onChange={(e) => setShareHandle(e.target.value)} placeholder="friend_handle" />
+                <button className="bg-sunshine text-ink font-black rounded-2xl px-4 py-2 min-h-[52px] shadow-xl hover:opacity-90 focus-ring" type="button" onClick={share}>
+                  Share
+                </button>
+              </div>
+            </section>
           )}
         </div>
-
-        {/* Revision title + code box under the sandbox */}
-        {isOwner && (
-          <div className="grid gap-2">
-            <input
-              className="border rounded px-3 py-2"
-              value={versionLabel}
-              onChange={(e) => setVersionLabel(e.target.value)}
-              placeholder="Revision label (e.g. v2)"
-            />
-            <textarea className="border rounded px-3 py-2 font-mono text-xs h-60" value={code} onChange={(e) => setCode(e.target.value)} />
-          </div>
-        )}
-
-        {/* Revisions list */}
-        <section className="space-y-2">
-          <h2 className="font-medium">Revisions</h2>
-          {revs.length === 0 ? (
-            <div className="text-sm opacity-70">No revisions.</div>
-          ) : (
-            <ul className="space-y-1">
-              {revs.map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-2">
-                  <div className="text-sm">
-                    <div className="font-medium">{r.version_label}</div>
-                    <div className="opacity-70">{new Date(r.created_at).toLocaleString()}</div>
-                  </div>
-                  {isOwner && (
-                    <button className="rounded border px-3 py-1 text-sm" type="button" onClick={() => restoreRevision(r.id)}>
-                      Restore
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* Share */}
-        {isOwner && (
-          <section className="space-y-2">
-            <h2 className="font-medium">Share</h2>
-            <div className="flex gap-2">
-              <input className="border rounded px-3 py-2 flex-1" value={shareHandle} onChange={(e) => setShareHandle(e.target.value)} placeholder="friend_handle" />
-              <button className="rounded bg-black text-white px-3 py-2 text-sm" type="button" onClick={share}>
-                Share
-              </button>
-            </div>
-          </section>
-        )}
       </div>
     </AuthGate>
   );
