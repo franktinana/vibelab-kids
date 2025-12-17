@@ -10,28 +10,31 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    setInfo(null);
 
     if (!email || !password) {
       setErr("Email and password required.");
       return;
     }
 
-    const fn =
-      mode === "login"
-        ? supabase.auth.signInWithPassword
-        : supabase.auth.signUp;
+    if (mode === "login") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) return setErr(error.message);
+      router.replace("/games");
+      return;
+    }
 
-    const { error } =
-      mode === "login"
-        ? await fn({ email, password } as any)
-        : await fn({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return setErr(error.message);
 
-    if (error) {
-      setErr(error.message);
+    // If email confirmations are enabled, session may be null until confirmed.
+    if (!data.session) {
+      setInfo("Account created. Check your email to confirm, then log in.");
       return;
     }
 
@@ -45,15 +48,25 @@ export default function LoginPage() {
       <form className="space-y-3" onSubmit={submit}>
         <div className="space-y-1">
           <label className="text-sm">Email</label>
-          <input className="w-full border rounded px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input
+            className="w-full border rounded px-3 py-2"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
 
         <div className="space-y-1">
           <label className="text-sm">Password</label>
-          <input className="w-full border rounded px-3 py-2" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input
+            className="w-full border rounded px-3 py-2"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
 
         {err && <div className="text-sm text-red-600">{err}</div>}
+        {info && <div className="text-sm opacity-80">{info}</div>}
 
         <button className="w-full rounded bg-black text-white py-2 text-sm" type="submit">
           {mode === "login" ? "Log in" : "Sign up"}

@@ -1,42 +1,29 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { wrapHtmlForSandbox } from "@/lib/sandbox";
+import { useEffect, useState } from "react";
 
 export default function SandboxPlayer({ html }: { html: string }) {
-  const [nonce, setNonce] = useState(0);
+  // Force iframe reload whenever html changes (so scripts re-run)
+  const [rev, setRev] = useState(0);
+  useEffect(() => setRev((n) => n + 1), [html]);
 
-  const srcDoc = useMemo(() => {
-    try {
-      return wrapHtmlForSandbox(html);
-    } catch (e: any) {
-      return `<!doctype html><html><body><pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;">${String(
-        e?.message ?? e
-      )}</pre></body></html>`;
-    }
-  }, [html]);
+  const srcDoc =
+    (html ?? "").trim() ||
+    "<!doctype html><html><body style='font-family:system-ui;padding:16px'>No code to run.</body></html>";
 
   return (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <button
-          className="rounded border px-3 py-1 text-sm"
-          onClick={() => setNonce((n) => n + 1)}
-          type="button"
-        >
-          Stop / Reset
-        </button>
-        <span className="text-xs opacity-70 self-center">
-          Runs in a sandboxed iframe (no networking).
-        </span>
-      </div>
-
+    <div className="border rounded overflow-hidden">
       <iframe
-        key={nonce}
-        title="Game Sandbox"
-        sandbox="allow-scripts allow-pointer-lock allow-fullscreen"
-        className="w-full h-[520px] border rounded"
+        key={rev}
+        title="Vibe Sandbox"
+        className="w-full h-[520px] bg-white"
         srcDoc={srcDoc}
+        // ✅ allow scripts so games actually run
+        // ✅ no allow-same-origin (keeps user code isolated from your app origin)
+        sandbox="allow-scripts allow-pointer-lock"
+        // ✅ fullscreen is NOT a sandbox flag — it’s separate:
+        allow="fullscreen"
+        allowFullScreen
       />
     </div>
   );

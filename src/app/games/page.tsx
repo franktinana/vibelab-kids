@@ -24,16 +24,37 @@ export default function GamesPage() {
       const uid = u.user?.id ?? "";
       setMe(uid);
 
-      const { data, error } = await supabase
+      // Fetch my games
+      const { data: myGames, error: e1 } = await supabase
         .from("games")
         .select("id,title,owner_id,current_revision_id,updated_at")
+        .eq("owner_id", uid)
         .order("updated_at", { ascending: false });
 
-      if (error) {
-        setErr(error.message);
+      if (e1) {
+        setErr(e1.message);
         return;
       }
-      setRows((data ?? []) as any);
+
+      // Fetch shared games
+      const { data: sharedGames, error: e2 } = await supabase
+        .from("game_shares")
+        .select(`
+          games!inner(id,title,owner_id,current_revision_id,updated_at)
+        `)
+        .eq("shared_with_user_id", uid);
+
+      if (e2) {
+        setErr(e2.message);
+        return;
+      }
+
+      const allGames = [
+        ...(myGames ?? []),
+        ...(sharedGames?.map(s => s.games).filter(Boolean) ?? [])
+      ];
+
+      setRows(allGames as any);
     })();
   }, []);
 
