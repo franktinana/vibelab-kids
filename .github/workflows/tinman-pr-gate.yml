@@ -1,0 +1,35 @@
+name: TinMan PR Gate (3.45 + 3.5)
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tinman_gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Run TinMan QA Gate
+        run: |
+          bash scripts/tinman_qa.sh
+
+      - name: Upload BROKEN_LINKS.md (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BROKEN_LINKS
+          path: BROKEN_LINKS.md
+          if-no-files-found: ignore

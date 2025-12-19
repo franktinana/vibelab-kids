@@ -1,56 +1,89 @@
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2025-12-19 05:11:26 UTC
+- **Generated:** 2025-12-19 05:21:35 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
 - **Commit:** 3ba4a2c
+- **App Router Dir:** src/app
 
-## Directory Skeleton
+## Directory Skeleton (maxdepth=3)
 ```text
 .
+docs
+docs/qa_ux_report.md
+docs/index.html
+docs/dev
+docs/dev/app.js
+docs/dev/index.html
+tsconfig.json
+tests
+tests/auth.spec.ts
 TINMAN_MANIFEST.md
+supabase
+supabase/migrations
+supabase/migrations/20241217000000_initial_schema.sql
+package.json
 postcss.config.mjs
+next-env.d.ts
+eslint.config.mjs
+package-lock.json
+public
+public/window.svg
+public/globe.svg
+public/next.svg
+public/vercel.svg
+public/file.svg
 scripts
 scripts/build_context_prompt.sh
 scripts/generate_manifest.sh
+scripts/audit_links.cjs
+scripts/tinman_qa.sh
 playwright.config.ts
-next.config.ts
-package-lock.json
 README.md
-docs
-docs/index.html
-docs/qa_ux_report.md
-docs/dev
-public
-public/file.svg
-public/next.svg
-public/globe.svg
-public/window.svg
-public/vercel.svg
-package.json
-eslint.config.mjs
-tests
-tests/auth.spec.ts
-tsconfig.json
+next.config.ts
 src
 src/components
+src/components/AuthGate.tsx
+src/components/SandboxPlayer.tsx
 src/lib
+src/lib/supabase.ts
+src/lib/sandbox.ts
 src/app
-supabase
-supabase/migrations
+src/app/layout.tsx
+src/app/games
+src/app/favicon.ico
+src/app/login
+src/app/profile
+src/app/friends
+src/app/globals.css
+src/app/page.tsx
 ```
 
 ## Tech Stack Highlights
 | Layer | Marker File | Purpose |
 | :--- | :--- | :--- |
 | Frontend | ./package.json | UI Framework |
-| Backend |  | Logic/API |
-| Infrastructure | ./.github | CI/CD |
+| Backend | ./node_modules/react-dom/server.js | Logic/API |
+| Infrastructure | ./node_modules/array.prototype.flatmap/.github | CI/CD/Deploy |
 
-## Critical Config Snapshots
-### package.json (Dependencies)
+## package.json (Dependencies Snapshot)
 ```json
 {
+  "name": "vibelab-kids",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "tinman:manifest": "bash scripts/generate_manifest.sh",
+    "tinman:prompt": "bash scripts/build_context_prompt.sh",
+    "tinman:links": "node scripts/audit_links.cjs",
+    "tinman:qa": "bash scripts/tinman_qa.sh",
+    "tinman:gate": "npm run tinman:manifest && npm run tinman:qa"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.88.0",
     "next": "16.0.10",
@@ -72,5 +105,14 @@ supabase/migrations
 }
 ```
 
+## Prisma Schema (if present)
+_No prisma/schema.prisma found._
+
+## Environment Variable Keys (no values)
+_Scans .env* files but only prints the key names._
+```text
+```
+
 ## Safety
-- Manifest excludes: .env contents, node_modules, build outputs.
+- Manifest excludes: secret VALUES, node_modules, build outputs.
+- If a secret is hardcoded in code, CI should fail it separately (add secret scanning).

@@ -1,0 +1,46 @@
+name: TinMan Pages Refresh (Manifest + Prompt)
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    # Prevent infinite loop when the action pushes its own refresh commit
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate Manifest + Prompt
+        run: |
+          chmod +x scripts/generate_manifest.sh scripts/build_context_prompt.sh
+          ./scripts/generate_manifest.sh
+          ./scripts/build_context_prompt.sh
+
+      - name: Commit Pages assets (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add TINMAN_MANIFEST.md public/TINMAN_MANIFEST.md docs/assets/TINMAN_MANIFEST.md docs/assets/DEV_CONTEXT_PROMPT.md
+
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+
+          git commit -m "chore(tinman): refresh manifest + prompt [skip ci]"
+          git push
