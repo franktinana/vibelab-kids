@@ -1,44 +1,43 @@
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2025-12-19 05:11:17 UTC
+- **Generated:** 2025-12-19 05:11:26 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** 080f801
+- **Commit:** 3ba4a2c
 
 ## Directory Skeleton
 ```text
 .
-docs
-docs/qa_ux_report.md
-docs/index.html
-docs/dev
-tsconfig.json
-tests
-tests/auth.spec.ts
 TINMAN_MANIFEST.md
-supabase
-supabase/migrations
-package.json
 postcss.config.mjs
-next-env.d.ts
-eslint.config.mjs
-package-lock.json
-public
-public/window.svg
-public/globe.svg
-public/next.svg
-public/vercel.svg
-public/file.svg
 scripts
 scripts/build_context_prompt.sh
 scripts/generate_manifest.sh
 playwright.config.ts
-README.md
 next.config.ts
+package-lock.json
+README.md
+docs
+docs/index.html
+docs/qa_ux_report.md
+docs/dev
+public
+public/file.svg
+public/next.svg
+public/globe.svg
+public/window.svg
+public/vercel.svg
+package.json
+eslint.config.mjs
+tests
+tests/auth.spec.ts
+tsconfig.json
 src
 src/components
 src/lib
 src/app
+supabase
+supabase/migrations
 ```
 
 ## Tech Stack Highlights
