@@ -16,73 +16,72 @@
 ## INPUT MANIFEST
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2025-12-19 05:25:50 UTC
+- **Generated:** 2025-12-19 05:26:00 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** b9cb8c8
+- **Commit:** c2d36aa
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
 ```text
 .
-docs
-docs/qa_ux_report.md
-docs/index.html
-docs/dev
-docs/dev/app.js
-docs/dev/index.html
-tsconfig.json
-tests
-tests/auth.spec.ts
 TINMAN_MANIFEST.md
-supabase
-supabase/migrations
-supabase/migrations/20241217000000_initial_schema.sql
-package.json
 postcss.config.mjs
-next-env.d.ts
-eslint.config.mjs
-package-lock.json
-public
-public/TINMAN_MANIFEST.md
-public/window.svg
-public/globe.svg
-public/next.svg
-public/vercel.svg
-public/file.svg
-BROKEN_LINKS.md
 scripts
+scripts/tinman_qa.sh
 scripts/build_context_prompt.sh
 scripts/generate_manifest.sh
 scripts/audit_links.cjs
-scripts/tinman_qa.sh
 playwright.config.ts
-README.md
 next.config.ts
+package-lock.json
+README.md
+docs
+docs/index.html
+docs/qa_ux_report.md
+docs/dev
+docs/dev/index.html
+docs/dev/app.js
+public
+public/TINMAN_MANIFEST.md
+public/file.svg
+public/next.svg
+public/globe.svg
+public/window.svg
+public/vercel.svg
+BROKEN_LINKS.md
+package.json
+eslint.config.mjs
+tests
+tests/auth.spec.ts
+tsconfig.json
 src
 src/components
 src/components/AuthGate.tsx
 src/components/SandboxPlayer.tsx
 src/lib
-src/lib/supabase.ts
 src/lib/sandbox.ts
+src/lib/supabase.ts
 src/app
-src/app/layout.tsx
 src/app/games
-src/app/favicon.ico
-src/app/login
-src/app/profile
-src/app/friends
 src/app/globals.css
+src/app/login
+src/app/friends
+src/app/profile
+src/app/layout.tsx
+src/app/favicon.ico
 src/app/page.tsx
+supabase
+supabase/migrations
+supabase/migrations/20241217000000_initial_schema.sql
 ```
 
 ## Tech Stack Highlights
 | Layer | Marker File | Purpose |
 | :--- | :--- | :--- |
 | Frontend | ./package.json | UI Framework |
-| Backend | ./node_modules/react-dom/server.js | Logic/API |
-| Infrastructure | ./node_modules/array.prototype.flatmap/.github | CI/CD/Deploy |
+| Backend | ./supabase | Logic/API |
+| Infrastructure | ./.github | CI/CD/Deploy |
 
 ## package.json (Dependencies Snapshot)
 ```json
