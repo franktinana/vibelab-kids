@@ -1,6 +1,6 @@
 # BROKEN_LINKS.md
 
-Generated: 2025-12-19T05:21:35.295Z
+Generated: 2025-12-19T05:22:16.722Z
 Strict: true
 
 ## Route Inventory

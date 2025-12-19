@@ -1,9 +1,9 @@
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2025-12-19 05:21:35 UTC
+- **Generated:** 2025-12-19 05:22:16 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** 3ba4a2c
+- **Commit:** fee17ab
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
@@ -28,11 +28,13 @@ next-env.d.ts
 eslint.config.mjs
 package-lock.json
 public
+public/TINMAN_MANIFEST.md
 public/window.svg
 public/globe.svg
 public/next.svg
 public/vercel.svg
 public/file.svg
+BROKEN_LINKS.md
 scripts
 scripts/build_context_prompt.sh
 scripts/generate_manifest.sh
