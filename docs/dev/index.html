@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>TinMan Dev | SDLC v2.1 Dashboard</title>
+  <style>
+    :root {
+      --primary:#00f2fe; --secondary:#4facfe; --bg:#0f172a; --card-bg:#1e293b;
+      --text:#f1f5f9; --code-bg:#0b1120; --border:#334155; --success:#10b981;
+    }
+    body{font-family:Inter,system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);margin:0}
+    .container{max-width:1200px;margin:0 auto;padding:40px 20px 100px}
+    header{border-bottom:1px solid var(--border);margin-bottom:30px;padding-bottom:20px}
+    h1{font-size:2.2rem;background:linear-gradient(to right,var(--primary),var(--secondary));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0}
+    .subtitle{color:#94a3b8;margin-top:6px}
+    .phase-box{background:var(--card-bg);border:1px solid var(--border);padding:25px;border-radius:12px}
+    .role-tag{color:var(--bg);font-weight:800;font-size:.75rem;text-transform:uppercase;background:var(--secondary);
+      padding:4px 10px;border-radius:4px;display:inline-block;margin-bottom:15px}
+    .prompt-container{background:var(--code-bg);border:1px solid #1e293b;border-radius:8px;overflow:hidden;margin-top:15px}
+    .prompt-header{background:#0f172a;padding:10px 15px;font-size:.75rem;color:#64748b;border-bottom:1px solid #1e293b;
+      display:flex;justify-content:space-between;align-items:center;font-weight:700}
+    pre{margin:0;padding:20px;white-space:pre-wrap;font-family:Consolas,monospace;font-size:.85rem;color:#cbd5e1;max-height:420px;overflow:auto}
+    .copy-btn{background:rgba(79,172,254,.1);color:var(--primary);border:1px solid var(--primary);padding:6px 14px;border-radius:4px;
+      cursor:pointer;font-weight:700;font-size:.7rem}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>TinMan Dev SDLC v2.1</h1>
+      <div class="subtitle">Hidden GitHub Pages dashboard (manual access only)</div>
+    </header>
+
+    <section class="phase-box">
+      <span class="role-tag">Live Context</span>
+      <h3 style="margin-top:0;color:#e2e8f0;">Latest Manifest + Prompt</h3>
+      <p style="color:#94a3b8;">Auto-regenerates on every push to <code>main</code>.</p>
+
+      <div class="prompt-container">
+        <div class="prompt-header">
+          <span>DEV_CONTEXT_PROMPT.md</span>
+          <button class="copy-btn" onclick="copyById('devPrompt', this)">COPY</button>
+        </div>
+        <pre id="devPrompt">Loading...</pre>
+      </div>
+
+      <div class="prompt-container" style="margin-top:16px;">
+        <div class="prompt-header">
+          <span>TINMAN_MANIFEST.md</span>
+          <button class="copy-btn" onclick="copyById('manifest', this)">COPY</button>
+        </div>
+        <pre id="manifest">Loading...</pre>
+      </div>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
