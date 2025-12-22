@@ -16,10 +16,10 @@
 ## INPUT MANIFEST
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2025-12-19 05:26:00 UTC
+- **Generated:** 2025-12-22 00:50:52 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** c2d36aa
+- **Commit:** 58d2d4e
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
@@ -50,6 +50,7 @@ public/globe.svg
 public/window.svg
 public/vercel.svg
 BROKEN_LINKS.md
+AGOR_CONTEXT.md
 package.json
 eslint.config.mjs
 tests
