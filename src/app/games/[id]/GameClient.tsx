@@ -201,7 +201,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
   if (!game) {
     return (
       <AuthGate>
-        <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+        <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
           <div className="text-white text-xl">Loading...</div>
         </div>
       </AuthGate>
@@ -210,7 +210,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-blue-600">
+      <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-purple-600">
         {/* Header */}
         <div className="flex items-center justify-between p-4">
           <h1 className="text-2xl font-bold text-white">{game.title}</h1>
