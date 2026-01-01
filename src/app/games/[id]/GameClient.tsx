@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AuthGate from "@/components/AuthGate";
-import { DeviceFrame } from "@/interfaces/components/DeviceFrame";
+import { DeviceFrame, DeviceType } from "@/interfaces/components/DeviceFrame";
 import { supabase } from "@/lib/supabase";
 
-type DeviceType = "mobile" | "tablet" | "desktop";
 type ViewMode = "preview" | "code";
 
 type Game = {
@@ -23,6 +22,12 @@ type Rev = {
   created_at: string;
 };
 
+const deviceOptions: { value: DeviceType; label: string; icon: string }[] = [
+  { value: "mobile", label: "Mobile", icon: "📱" },
+  { value: "720p", label: "720p", icon: "💻" },
+  { value: "1080p", label: "1080p", icon: "🖥️" },
+];
+
 export default function GameClient({ gameId }: { gameId: string }) {
   const [game, setGame] = useState<Game | null>(null);
   const [revisions, setRevisions] = useState<Rev[]>([]);
@@ -31,7 +36,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
   const [versionLabel, setVersionLabel] = useState("");
   const [isOwner, setIsOwner] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
-  const [device, setDevice] = useState<DeviceType>("mobile");
+  const [device, setDevice] = useState<DeviceType>("1080p");
   const [viewMode, setViewMode] = useState<ViewMode>("preview");
   const [showRevisions, setShowRevisions] = useState(false);
   const [runKey, setRunKey] = useState(0);
@@ -179,24 +184,24 @@ export default function GameClient({ gameId }: { gameId: string }) {
             /* Preview Mode - Full screen game */
             <div className="bg-surface rounded-2xl shadow-xl p-6">
               {/* Device Selector */}
-              <div className="flex justify-center gap-2 mb-4">
-                {(["mobile", "tablet", "desktop"] as DeviceType[]).map((d) => (
+              <div className="flex justify-center gap-2 mb-6">
+                {deviceOptions.map((opt) => (
                   <button
-                    key={d}
-                    onClick={() => setDevice(d)}
+                    key={opt.value}
+                    onClick={() => setDevice(opt.value)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                      device === d
+                      device === opt.value
                         ? "bg-blue-600 text-white"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
-                    {d === "mobile" ? "📱" : d === "tablet" ? "📱" : "🖥️"} {d.charAt(0).toUpperCase() + d.slice(1)}
+                    {opt.icon} {opt.label}
                   </button>
                 ))}
               </div>
               
-              {/* Game Preview - Centered and Large */}
-              <div className="flex justify-center items-center min-h-[500px]">
+              {/* Game Preview - Centered */}
+              <div className="flex justify-center items-start overflow-x-auto py-4">
                 <DeviceFrame device={device}>
                   <iframe
                     key={runKey}
@@ -209,7 +214,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
               </div>
 
               {/* Quick Run Button in Preview Mode */}
-              <div className="flex justify-center mt-4">
+              <div className="flex justify-center mt-6">
                 <button
                   onClick={handleRun}
                   className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition font-medium"
