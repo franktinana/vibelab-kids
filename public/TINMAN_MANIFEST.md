@@ -1,9 +1,9 @@
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2026-01-01 05:27:35 UTC
+- **Generated:** 2026-01-01 05:35:46 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** d8b9873
+- **Commit:** 869fdfb
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
@@ -41,6 +41,8 @@ tests
 tests/auth.spec.ts
 tsconfig.json
 src
+src/interfaces
+src/interfaces/components
 src/components
 src/components/AuthGate.tsx
 src/components/SandboxPlayer.tsx
@@ -59,6 +61,8 @@ src/app/page.tsx
 src/core
 src/core/entities
 src/core/repositories
+src/infrastructure
+src/infrastructure/supabase
 supabase
 supabase/migrations
 supabase/migrations/20241217000000_initial_schema.sql
@@ -68,7 +72,7 @@ supabase/migrations/20241217000000_initial_schema.sql
 | Layer | Marker File | Purpose |
 | :--- | :--- | :--- |
 | Frontend | ./package.json | UI Framework |
-| Backend | ./supabase | Logic/API |
+| Backend | ./src/infrastructure/supabase | Logic/API |
 | Infrastructure | ./.github | CI/CD/Deploy |
 
 ## package.json (Dependencies Snapshot)
