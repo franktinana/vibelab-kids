@@ -16,10 +16,10 @@
 ## INPUT MANIFEST
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2026-01-01 05:25:50 UTC
+- **Generated:** 2026-01-01 05:27:35 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** a2215e1
+- **Commit:** d8b9873
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
@@ -74,6 +74,7 @@ src/app/favicon.ico
 src/app/page.tsx
 src/core
 src/core/entities
+src/core/repositories
 supabase
 supabase/migrations
 supabase/migrations/20241217000000_initial_schema.sql
