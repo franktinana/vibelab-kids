@@ -16,10 +16,10 @@
 ## INPUT MANIFEST
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2026-01-01 05:33:34 UTC
+- **Generated:** 2026-01-01 05:34:42 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** e011edd
+- **Commit:** 5412411
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
