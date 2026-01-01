@@ -1,9 +1,9 @@
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2026-01-01 08:01:57 UTC
+- **Generated:** 2026-01-01 08:14:22 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** c7aaebc
+- **Commit:** d9cce32
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
