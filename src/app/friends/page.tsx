@@ -46,7 +46,7 @@ export default function FriendsPage() {
                 .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
 
       if (friendRows) {
-        const friendList: Friend[] = friendRows.map((row: { requester_id: string; addressee_id: string; req: { handle: string }; addr: { handle: string } }) =>
+        const friendList: Friend[] = (friendRows as any[]).map((row: { requester_id: string; addressee_id: string; req: { handle: string }; addr: { handle: string } }) =>
           row.requester_id === user.id
             ? { id: row.addressee_id, handle: row.addr.handle }
             : { id: row.requester_id, handle: row.req.handle }
