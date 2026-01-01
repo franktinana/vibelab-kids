@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AuthGate from "@/components/AuthGate";
 import { DeviceFrame, DeviceType } from "@/interfaces/components/DeviceFrame";
 import { supabase } from "@/lib/supabase";
@@ -26,6 +26,7 @@ const deviceOptions: { value: DeviceType; label: string; icon: string }[] = [
   { value: "mobile", label: "Mobile", icon: "📱" },
   { value: "720p", label: "720p", icon: "💻" },
   { value: "1080p", label: "1080p", icon: "🖥️" },
+  { value: "1440p", label: "1440p", icon: "🖥️" },
 ];
 
 export default function GameClient({ gameId }: { gameId: string }) {
@@ -40,6 +41,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
   const [viewMode, setViewMode] = useState<ViewMode>("preview");
   const [showRevisions, setShowRevisions] = useState(false);
   const [runKey, setRunKey] = useState(0);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     async function load() {
@@ -75,6 +77,17 @@ export default function GameClient({ gameId }: { gameId: string }) {
     }
     load();
   }, [gameId]);
+
+  // Focus iframe when switching to preview mode or when game refreshes
+  useEffect(() => {
+    if (viewMode === "preview" && iframeRef.current) {
+      // Small delay to ensure iframe is loaded
+      const timer = setTimeout(() => {
+        iframeRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode, runKey]);
 
   const selectedRevision = useMemo(
     () => revisions.find((r) => r.id === selectedRevisionId),
@@ -129,6 +142,10 @@ export default function GameClient({ gameId }: { gameId: string }) {
     setRunKey((k) => k + 1);
   };
 
+  const focusGame = () => {
+    iframeRef.current?.focus();
+  };
+
   if (!game) {
     return (
       <AuthGate>
@@ -181,18 +198,18 @@ export default function GameClient({ gameId }: { gameId: string }) {
         {/* Main Content */}
         <div className="px-4 pb-4">
           {viewMode === "preview" ? (
-            /* Preview Mode - Full screen game */
-            <div className="bg-surface rounded-2xl shadow-xl p-6">
+            /* Preview Mode - Game focused, no card wrapper */
+            <div className="flex flex-col items-center">
               {/* Device Selector */}
-              <div className="flex justify-center gap-2 mb-6">
+              <div className="flex justify-center gap-2 mb-4">
                 {deviceOptions.map((opt) => (
                   <button
                     key={opt.value}
                     onClick={() => setDevice(opt.value)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                       device === opt.value
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        ? "bg-white text-blue-600 shadow"
+                        : "bg-white/20 text-white hover:bg-white/30"
                     }`}
                   >
                     {opt.icon} {opt.label}
@@ -200,26 +217,44 @@ export default function GameClient({ gameId }: { gameId: string }) {
                 ))}
               </div>
               
-              {/* Game Preview - Centered */}
-              <div className="flex justify-center items-start overflow-x-auto py-4">
+              {/* Game Preview - Click to focus for keyboard controls */}
+              <div 
+                className="relative cursor-pointer group"
+                onClick={focusGame}
+                title="Click to enable keyboard controls (WASD, Arrows, Space, etc.)"
+              >
                 <DeviceFrame device={device}>
                   <iframe
+                    ref={iframeRef}
                     key={runKey}
                     srcDoc={code}
                     className="w-full h-full border-0"
                     sandbox="allow-scripts"
                     title="Game Preview"
+                    tabIndex={0}
                   />
                 </DeviceFrame>
+                {/* Focus hint overlay - shows on hover */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-end justify-center pb-4 pointer-events-none">
+                  <span className="bg-black/70 text-white text-xs px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                    Click to enable keyboard controls
+                  </span>
+                </div>
               </div>
 
-              {/* Quick Run Button in Preview Mode */}
-              <div className="flex justify-center mt-6">
+              {/* Controls */}
+              <div className="flex gap-3 mt-4">
                 <button
                   onClick={handleRun}
                   className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition font-medium"
                 >
-                  🔄 Refresh Game
+                  🔄 Refresh
+                </button>
+                <button
+                  onClick={focusGame}
+                  className="bg-white/20 text-white px-6 py-2 rounded-lg hover:bg-white/30 transition font-medium"
+                >
+                  🎮 Focus Game
                 </button>
               </div>
             </div>
@@ -227,11 +262,12 @@ export default function GameClient({ gameId }: { gameId: string }) {
             /* Code Mode - Full screen editor */
             <div className="bg-surface rounded-2xl shadow-xl p-6">
               <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-600 mb-1">Version Label</label>
                 <input
                   type="text"
                   value={versionLabel}
                   onChange={(e) => setVersionLabel(e.target.value)}
-                  placeholder="Version label (e.g., v1, v2)"
+                  placeholder="e.g., v1, v2, bug-fix"
                   className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-400 focus:outline-none"
                 />
               </div>
@@ -243,10 +279,10 @@ export default function GameClient({ gameId }: { gameId: string }) {
               />
               <div className="flex gap-3 mt-4">
                 <button
-                  onClick={handleRun}
-                  className="flex-1 bg-gray-100 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-200 transition font-medium"
+                  onClick={() => { handleRun(); setViewMode("preview"); }}
+                  className="flex-1 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition font-medium"
                 >
-                  ▶️ Run
+                  ▶️ Run & Preview
                 </button>
                 {isOwner && (
                   <button
@@ -265,15 +301,15 @@ export default function GameClient({ gameId }: { gameId: string }) {
         <div className="px-4 pb-4">
           <button
             onClick={() => setShowRevisions(!showRevisions)}
-            className="w-full bg-surface rounded-2xl shadow-xl p-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full bg-white/10 backdrop-blur rounded-2xl p-4 flex items-center justify-between hover:bg-white/20 transition text-white"
           >
-            <span className="text-lg font-bold text-ink">
-              Revisions ({revisions.length})
+            <span className="text-lg font-bold">
+              📜 Revisions ({revisions.length})
             </span>
             <span className="text-2xl">{showRevisions ? "▲" : "▼"}</span>
           </button>
           {showRevisions && revisions.length > 0 && (
-            <div className="bg-surface rounded-b-2xl shadow-xl px-4 pb-4 -mt-2 pt-2 border-t border-gray-100">
+            <div className="bg-white/10 backdrop-blur rounded-b-2xl px-4 pb-4 -mt-2 pt-4">
               <div className="grid gap-2 max-h-48 overflow-y-auto">
                 {revisions.map((rev) => (
                   <button
@@ -281,12 +317,12 @@ export default function GameClient({ gameId }: { gameId: string }) {
                     onClick={() => handleRevisionChange(rev.id)}
                     className={`p-3 rounded-lg text-left transition ${
                       selectedRevisionId === rev.id
-                        ? "bg-blue-100 border-2 border-blue-400"
-                        : "bg-gray-50 hover:bg-gray-100"
+                        ? "bg-white text-blue-600"
+                        : "bg-white/20 text-white hover:bg-white/30"
                     }`}
                   >
                     <div className="font-medium">{rev.version_label}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs opacity-70">
                       {new Date(rev.created_at).toLocaleString()}
                     </div>
                   </button>
@@ -299,15 +335,15 @@ export default function GameClient({ gameId }: { gameId: string }) {
         {/* Share with Friends (Owner Only) */}
         {isOwner && (
           <div className="px-4 pb-4">
-            <div className="bg-surface rounded-2xl shadow-xl p-4">
-              <h2 className="text-lg font-bold text-ink mb-3">Share with Friends</h2>
+            <div className="bg-white/10 backdrop-blur rounded-2xl p-4">
+              <h2 className="text-lg font-bold text-white mb-3">🤝 Share with Friends</h2>
               <div className="flex gap-2">
                 <input
                   type="email"
                   value={shareEmail}
                   onChange={(e) => setShareEmail(e.target.value)}
                   placeholder="Friend's email"
-                  className="flex-1 border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+                  className="flex-1 bg-white/20 border-2 border-white/30 rounded-xl px-3 py-2 text-sm text-white placeholder-white/50 focus:border-white focus:outline-none"
                 />
                 <button
                   onClick={handleShare}

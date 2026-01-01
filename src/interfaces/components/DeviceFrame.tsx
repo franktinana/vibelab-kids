@@ -2,24 +2,26 @@
 
 import React, { ReactNode } from 'react';
 
-type DeviceType = 'mobile' | '720p' | '1080p';
+type DeviceType = 'mobile' | '720p' | '1080p' | '1440p';
 
 interface DeviceFrameProps {
   device: DeviceType;
   children: ReactNode;
 }
 
-// Actual screen dimensions in pixels
+// Actual screen dimensions in pixels with scale factors to fit on screen
 const deviceDimensions: Record<DeviceType, { width: number; height: number; scale: number }> = {
-  mobile: { width: 390, height: 844, scale: 0.65 },   // iPhone 14 size
-  '720p': { width: 1280, height: 720, scale: 0.55 },  // HD 720p
-  '1080p': { width: 1920, height: 1080, scale: 0.45 }, // Full HD 1080p
+  mobile: { width: 390, height: 844, scale: 0.7 },    // iPhone 14 size
+  '720p': { width: 1280, height: 720, scale: 0.65 },  // HD 720p
+  '1080p': { width: 1920, height: 1080, scale: 0.5 }, // Full HD 1080p
+  '1440p': { width: 2560, height: 1440, scale: 0.38 }, // Quad HD 1440p
 };
 
 const deviceLabels: Record<DeviceType, string> = {
   mobile: '📱 Mobile (390×844)',
   '720p': '💻 720p (1280×720)',
   '1080p': '🖥️ 1080p (1920×1080)',
+  '1440p': '🖥️ 1440p (2560×1440)',
 };
 
 export const DeviceFrame: React.FC<DeviceFrameProps> = ({ device, children }) => {
@@ -70,8 +72,8 @@ export const DeviceFrame: React.FC<DeviceFrameProps> = ({ device, children }) =>
     <div 
       className="bg-gray-800 rounded-lg shadow-2xl overflow-hidden"
       style={{
-        width: `${scaledWidth + 16}px`,
-        height: `${scaledHeight + 40}px`
+        width: `${scaledWidth + 8}px`,
+        height: `${scaledHeight + 36}px`
       }}
     >
       {/* Browser chrome */}
@@ -89,9 +91,9 @@ export const DeviceFrame: React.FC<DeviceFrameProps> = ({ device, children }) =>
       <div 
         className="bg-white overflow-hidden"
         style={{
-          width: `${scaledWidth + 16}px`,
+          width: `${scaledWidth + 8}px`,
           height: `${scaledHeight}px`,
-          padding: '8px'
+          padding: '4px'
         }}
       >
         {/* Actual content at full resolution, scaled down */}
