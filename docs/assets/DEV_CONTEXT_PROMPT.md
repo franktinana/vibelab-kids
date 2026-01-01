@@ -16,10 +16,10 @@
 ## INPUT MANIFEST
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2026-01-01 05:32:30 UTC
+- **Generated:** 2026-01-01 05:33:34 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** c5b8075
+- **Commit:** e011edd
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
@@ -57,6 +57,8 @@ tests
 tests/auth.spec.ts
 tsconfig.json
 src
+src/interfaces
+src/interfaces/components
 src/components
 src/components/AuthGate.tsx
 src/components/SandboxPlayer.tsx
