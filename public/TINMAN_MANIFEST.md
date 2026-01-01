@@ -1,9 +1,9 @@
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2025-12-19 05:26:00 UTC
+- **Generated:** 2026-01-01 05:25:50 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** c2d36aa
+- **Commit:** a2215e1
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
@@ -34,6 +34,7 @@ public/globe.svg
 public/window.svg
 public/vercel.svg
 BROKEN_LINKS.md
+AGOR_CONTEXT.md
 package.json
 eslint.config.mjs
 tests
@@ -55,6 +56,8 @@ src/app/profile
 src/app/layout.tsx
 src/app/favicon.ico
 src/app/page.tsx
+src/core
+src/core/entities
 supabase
 supabase/migrations
 supabase/migrations/20241217000000_initial_schema.sql
