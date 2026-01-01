@@ -1,201 +1,127 @@
 "use client";
-
-import { useRef, useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import AuthGate from "@/components/AuthGate";
 import { DeviceFrame, DeviceType } from "@/interfaces/components/DeviceFrame";
-import { supabase } from "@/lib/supabase";
+
+const DEFAULT_CODE = '<!doctype html><html><head><style>body{margin:0;background:#000;}</style></head><body><canvas id="c"></canvas><script>const c=document.getElementById("c");c.width=600;c.height=400;const x=c.getContext("2d");x.fillStyle="#0f0";x.fillRect(10,10,50,50);</script></body></html>';
 
 const GAME_SANDBOX = "allow-scripts allow-same-origin allow-pointer-lock";
 
-const deviceOptions: { value: DeviceType; label: string; icon: string }[] = [
-  { value: "mobile", label: "Mobile", icon: "📱" },
-  { value: "720p", label: "720p", icon: "💻" },
-  { value: "1080p", label: "1080p", icon: "🖥️" },
-];
-
 export default function NewGamePage() {
-  const router = useRouter();
   const [title, setTitle] = useState("Untitled Game");
-  const [versionLabel, setVersionLabel] = useState("v1");
-  const [code, setCode] = useState("");
-  const [device, setDevice] = useState<DeviceType>("720p");
-  const [runKey, setRunKey] = useState(0);
-  const [saving, setSaving] = useState(false);
+  const [version, setVersion] = useState("v1");
+  const [code, setCode] = useState(DEFAULT_CODE);
+  const [preview, setPreview] = useState("");
+  const [device, setDevice] = useState<DeviceType>("1080p");
+  const [mode, setMode] = useState<"preview" | "code">("preview");
+  const [isFocused, setIsFocused] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const router = useRouter();
 
-  const handleRun = () => {
-    setRunKey((k) => k + 1);
-    setTimeout(() => iframeRef.current?.focus(), 100);
-  };
+  useEffect(() => {
+    setPreview(code);
+  }, []);
 
-  const handleSave = async () => {
-    setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setSaving(false);
-      return;
+  useEffect(() => {
+    if (mode === "preview" && iframeRef.current) {
+      iframeRef.current.focus();
     }
+  }, [mode, preview]);
 
-    // Create new game
-    const { data: newGame, error: gameError } = await supabase
+  function runCode() {
+    setPreview(code);
+    setMode("preview");
+    setTimeout(() => {
+      iframeRef.current?.focus();
+    }, 100);
+  }
+
+  async function saveGame() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return alert("Not logged in");
+    const { data: game, error: gameError } = await supabase
       .from("games")
       .insert({ title, owner_id: user.id })
       .select()
       .single();
-
-    if (gameError || !newGame) {
-      alert("Error creating game");
-      setSaving(false);
-      return;
-    }
-
-    // Create first revision
-    const { data: newRev, error: revError } = await supabase
+    if (gameError || !game) return alert("Error creating game");
+    const { error: revError } = await supabase
       .from("game_revisions")
-      .insert({
-        game_id: newGame.id,
-        code,
-        version_label: versionLabel,
-      })
-      .select()
-      .single();
-
-    if (revError || !newRev) {
-      alert("Error saving code");
-      setSaving(false);
-      return;
-    }
-
-    // Update game with current revision
-    await supabase
-      .from("games")
-      .update({ current_revision_id: newRev.id })
-      .eq("id", newGame.id);
-
-    router.push(`/games/${newGame.id}`);
-  };
+      .insert({ game_id: game.id, version_label: version, code });
+    if (revError) return alert("Error saving revision");
+    router.push("/games/" + game.id);
+  }
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-purple-600">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4">
-          <h1 className="text-2xl font-bold text-white">🎮 New Game</h1>
-          <a
-            href="/games"
-            className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition"
-          >
-            ← Back
-          </a>
+      <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-purple-600 p-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center mb-4">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-2xl font-bold bg-transparent text-white border-b-2 border-white/30 focus:border-white focus:outline-none px-1"
+          />
+          <div className="flex items-center gap-3">
+            <div className="flex bg-white/20 rounded-lg p-1">
+              <button
+                onClick={() => setMode("preview")}
+                className={mode === "preview" ? "px-4 py-2 rounded-md bg-white text-ink" : "px-4 py-2 rounded-md text-white hover:bg-white/10"}
+              >
+                🎮 Play
+              </button>
+              <button
+                onClick={() => setMode("code")}
+                className={mode === "code" ? "px-4 py-2 rounded-md bg-white text-ink" : "px-4 py-2 rounded-md text-white hover:bg-white/10"}
+              >
+                💻 Code
+              </button>
+            </div>
+            <button onClick={() => router.push("/games")} className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg border border-white/30">
+              Back
+            </button>
+          </div>
         </div>
 
-        {/* Main Content - Two Column Layout */}
-        <div className="px-4 pb-8">
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Left Column - Code Editor */}
-            <div className="bg-white/10 backdrop-blur rounded-2xl p-6">
-              <h2 className="text-lg font-bold text-white mb-4">💻 Code Editor</h2>
-              
-              {/* Game Title */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-white/80 mb-1">Game Title</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="My Awesome Game"
-                  className="w-full bg-white/20 border-2 border-white/30 rounded-xl px-4 py-2 text-white placeholder-white/50 focus:border-white focus:outline-none"
-                />
-              </div>
-
-              {/* Version Label */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-white/80 mb-1">Version Label</label>
-                <input
-                  type="text"
-                  value={versionLabel}
-                  onChange={(e) => setVersionLabel(e.target.value)}
-                  placeholder="v1"
-                  className="w-full bg-white/20 border-2 border-white/30 rounded-xl px-4 py-2 text-white placeholder-white/50 focus:border-white focus:outline-none"
-                />
-              </div>
-
-              {/* Code Textarea */}
-              <textarea
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="w-full h-[350px] p-4 font-mono text-sm bg-gray-900 text-green-400 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-white/50"
-                placeholder="Paste your HTML/JS game code here..."
-              />
-
-              {/* Buttons */}
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={handleRun}
-                  className="flex-1 bg-mint text-white px-6 py-3 rounded-xl hover:opacity-90 transition font-medium"
-                >
-                  ▶️ Run Preview
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1 bg-sunshine text-ink font-bold rounded-xl px-6 py-3 hover:opacity-90 transition disabled:opacity-50"
-                >
-                  {saving ? "Saving..." : "💾 Save Game"}
-                </button>
-              </div>
-            </div>
-
-            {/* Right Column - Preview */}
-            <div className="bg-white/10 backdrop-blur rounded-2xl p-6">
-              <h2 className="text-lg font-bold text-white mb-4">👁️ Preview</h2>
-              
-              {/* Device Selector */}
-              <div className="flex justify-center gap-2 mb-4">
-                {deviceOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setDevice(opt.value)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                      device === opt.value
-                        ? "bg-white text-purple-600 shadow"
-                        : "bg-white/20 text-white hover:bg-white/30"
-                    }`}
-                  >
-                    {opt.icon} {opt.label}
+        <div className="max-w-7xl mx-auto">
+          {mode === "preview" ? (
+            <div className="flex flex-col items-center">
+              <div className="flex gap-2 mb-4">
+                {(["mobile", "720p", "1080p", "1440p"] as DeviceType[]).map((d) => (
+                  <button key={d} onClick={() => setDevice(d)} className={device === d ? "px-4 py-2 rounded-lg bg-white text-ink" : "px-4 py-2 rounded-lg bg-white/20 text-white hover:bg-white/30"}>
+                    {d === "mobile" ? "📱 Mobile" : d === "720p" ? "💻 720p" : d === "1080p" ? "🖥️ 1080p" : "🖥️ 1440p"}
                   </button>
                 ))}
               </div>
-
-              {/* Preview Area */}
-              <div className="flex justify-center items-start overflow-auto py-4 min-h-[400px]">
-                {code ? (
-                  <DeviceFrame device={device}>
-                    <iframe
-                      ref={iframeRef}
-                      key={runKey}
-                      srcDoc={code}
-                      className="w-full h-full border-0"
-                      sandbox={GAME_SANDBOX}
-                      title="Game Preview"
-                      tabIndex={0}
-                    />
-                  </DeviceFrame>
-                ) : (
-                  <div className="text-white/50 text-center py-20">
-                    <div className="text-6xl mb-4">🎮</div>
-                    <p>Paste your game code and click "Run Preview"</p>
-                  </div>
-                )}
+              <div className={isFocused ? "mb-2 px-4 py-1 rounded-full text-sm font-medium bg-mint text-white" : "mb-2 px-4 py-1 rounded-full text-sm font-medium bg-white/20 text-white/70"}>
+                {isFocused ? "🎮 Game Active - Use WASD/Arrows!" : "Click game for controls"}
+              </div>
+              <div className={isFocused ? "ring-4 ring-mint rounded-2xl" : ""} onMouseEnter={() => iframeRef.current?.focus()}>
+                <DeviceFrame device={device}>
+                  <iframe ref={iframeRef} srcDoc={preview} sandbox={GAME_SANDBOX} className="w-full h-full border-0" title="Game" tabIndex={0} onFocus={() => setIsFocused(true)} onBlur={() => setIsFocused(false)} />
+                </DeviceFrame>
+              </div>
+              <div className="mt-4 flex gap-3">
+                <button onClick={runCode} className="px-6 py-2 bg-mint hover:bg-green-600 text-white font-semibold rounded-lg">🔄 Refresh</button>
+                <button onClick={() => iframeRef.current?.focus()} className={isFocused ? "px-6 py-2 rounded-lg font-semibold bg-mint text-white" : "px-6 py-2 rounded-lg font-semibold bg-white/20 text-white hover:bg-white/30"}>
+                  {isFocused ? "🎮 Focused!" : "🎮 Focus Game"}
+                </button>
               </div>
             </div>
-          </div>
-
-          {/* Help Text */}
-          <div className="mt-6 text-center text-white/60 text-sm">
-            <p>💡 Tip: Use Gemini AI Canvas to create HTML5 games, then paste the code here to test and save!</p>
-          </div>
+          ) : (
+            <div className="bg-white/10 backdrop-blur rounded-xl p-6 border border-white/20">
+              <div className="flex gap-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-white/70 text-sm">Version:</label>
+                  <input value={version} onChange={(e) => setVersion(e.target.value)} className="px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white w-24" />
+                </div>
+                <button onClick={runCode} className="px-6 py-2 bg-mint hover:bg-green-600 text-white font-semibold rounded-lg">▶️ Run</button>
+                <button onClick={saveGame} className="px-6 py-2 bg-sunshine hover:bg-yellow-500 text-ink font-semibold rounded-lg">💾 Save</button>
+              </div>
+              <textarea value={code} onChange={(e) => setCode(e.target.value)} className="w-full h-[60vh] p-4 bg-ink text-green-400 font-mono text-sm rounded-lg" spellCheck={false} />
+            </div>
+          )}
         </div>
       </div>
     </AuthGate>

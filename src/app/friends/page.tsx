@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AuthGate from "@/components/AuthGate";
@@ -28,186 +27,131 @@ export default function FriendsPage() {
       if (!user) return;
       setCurrentUserId(user.id);
 
-      // Load incoming friend requests
+      // Incoming requests
       const { data: requests } = await supabase
-        .from("friend_requests")
-        .select("id, requester_id, profiles!friend_requests_requester_id_fkey(handle)")
-        .eq("recipient_id", user.id)
+        .from("friendships")
+        .select("id, requester_id, profiles:requester_id(handle)")
+        .eq("addressee_id", user.id)
         .eq("status", "pending");
-
+      
       if (requests) {
         setIncomingRequests(requests as unknown as FriendRequest[]);
       }
 
-      // Load accepted friends
-      const { data: friendships } = await supabase
+      // Accepted friends
+      const { data: friendRows } = await supabase
         .from("friendships")
-        .select("friend_id, profiles!friendships_friend_id_fkey(id, handle)")
-        .eq("user_id", user.id);
+        .select("requester_id, addressee_id, req:requester_id(handle), addr:addressee_id(handle)")
+        .eq("status", "accepted")
+                .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
 
-      if (friendships) {
-        const friendList = friendships.map((f: { profiles: { id: string; handle: string } }) => ({
-          id: f.profiles.id,
-          handle: f.profiles.handle,
-        }));
+      if (friendRows) {
+        const friendList: Friend[] = friendRows.map((row: { requester_id: string; addressee_id: string; req: { handle: string }; addr: { handle: string } }) =>
+          row.requester_id === user.id
+            ? { id: row.addressee_id, handle: row.addr.handle }
+            : { id: row.requester_id, handle: row.req.handle }
+        );
         setFriends(friendList);
       }
     }
     load();
   }, []);
 
-  const handleSearch = async () => {
-    if (!searchHandle.trim()) return;
-    
+  async function handleSearch() {
     const { data } = await supabase
-      .from("profiles")
-      .select("id, handle")
-      .eq("handle", searchHandle.trim())
-      .single();
+      .from("profile_directory")
+      .select("user_id")
+      .eq("handle", searchHandle)
+      .maybeSingle();
 
-    if (data && data.id !== currentUserId) {
-      // Check if already friends
-      const isFriend = friends.some(f => f.id === data.id);
-      if (isFriend) {
-        setSearchResult("Already friends!");
-        return;
-      }
-
-      // Send friend request
-      const { error } = await supabase
-        .from("friend_requests")
-        .insert({ requester_id: currentUserId, recipient_id: data.id });
-
-      if (error) {
-        setSearchResult("Request already sent or error occurred.");
-      } else {
-        setSearchResult("Friend request sent!");
-      }
-    } else if (data?.id === currentUserId) {
-      setSearchResult("That's you!");
+    if (data) {
+      await supabase.from("friendships").insert({
+        requester_id: currentUserId,
+        addressee_id: data.user_id,
+        status: "pending",
+      });
+      setSearchResult("Friend request sent!");
     } else {
-      setSearchResult("User not found.");
+      setSearchResult("Handle not found");
     }
-    
-    setTimeout(() => setSearchResult(null), 3000);
-  };
+  }
 
-  const acceptRequest = async (requestId: string, requesterId: string) => {
-    await supabase
-      .from("friend_requests")
-      .update({ status: "accepted" })
-      .eq("id", requestId);
-
-    // Create friendship entries
-    await supabase.from("friendships").insert([
-      { user_id: currentUserId, friend_id: requesterId },
-      { user_id: requesterId, friend_id: currentUserId },
-    ]);
-
-    // Refresh the page data
-    window.location.reload();
-  };
-
-  const declineRequest = async (requestId: string) => {
-    await supabase
-      .from("friend_requests")
-      .update({ status: "declined" })
-      .eq("id", requestId);
-
-    setIncomingRequests(prev => prev.filter(r => r.id !== requestId));
-  };
+  async function acceptRequest(id: string) {
+    await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    setIncomingRequests((prev) => prev.filter((r) => r.id !== id));
+  }
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-purple-600">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4">
-          <h1 className="text-2xl font-bold text-white">👥 Friends</h1>
-          <a
-            href="/games"
-            className="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition"
-          >
-            ← Back
-          </a>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-cyan-500 to-purple-600 p-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-white">Friends</h1>
+            <button
+              onClick={() => window.location.href = "/games"}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg border border-white/30 transition"
+            >
+              Back
+            </button>
+          </div>
 
-        {/* Main Content */}
-        <div className="max-w-2xl mx-auto px-4 pb-8">
-          {/* Search for Friends */}
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-6 mb-6">
-            <h2 className="text-lg font-bold text-white mb-4">🔍 Find Friends</h2>
-            <div className="flex gap-2">
+          {/* Search for friends */}
+          <div className="bg-white/10 backdrop-blur rounded-xl p-6 mb-6 border border-white/20">
+            <h2 className="text-xl font-semibold text-white mb-4">Add Friend</h2>
+            <div className="flex gap-3">
               <input
-                type="text"
+                placeholder="Search by handle..."
                 value={searchHandle}
                 onChange={(e) => setSearchHandle(e.target.value)}
-                placeholder="Enter friend's handle"
-                className="flex-1 bg-white/20 border-2 border-white/30 rounded-xl px-4 py-2 text-white placeholder-white/50 focus:border-white focus:outline-none"
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="flex-1 px-4 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/50"
               />
               <button
                 onClick={handleSearch}
-                className="bg-sunshine text-ink font-bold rounded-xl px-6 py-2 hover:opacity-90 transition"
+                className="px-6 py-2 bg-sunshine hover:bg-yellow-500 text-ink font-semibold rounded-lg transition"
               >
                 Search
               </button>
             </div>
             {searchResult && (
-              <p className="mt-3 text-white/80 text-sm">{searchResult}</p>
+              <p className="mt-3 text-white/80">{searchResult}</p>
             )}
           </div>
 
           {/* Incoming Requests */}
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-6 mb-6">
-            <h2 className="text-lg font-bold text-white mb-4">📬 Incoming Requests</h2>
+          <div className="bg-white/10 backdrop-blur rounded-xl p-6 mb-6 border border-white/20">
+            <h2 className="text-xl font-semibold text-white mb-4">Incoming Requests</h2>
             {incomingRequests.length === 0 ? (
-              <p className="text-white/60">No pending requests.</p>
+              <p className="text-white/60">No pending requests</p>
             ) : (
-              <div className="space-y-3">
+              <ul className="space-y-3">
                 {incomingRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="bg-white/20 rounded-xl p-4 flex items-center justify-between"
-                  >
-                    <span className="text-white font-medium">
-                      @{req.profiles.handle}
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => acceptRequest(req.id, req.requester_id)}
-                        className="bg-mint text-white px-4 py-1 rounded-lg text-sm hover:opacity-90 transition"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => declineRequest(req.id)}
-                        className="bg-red-500 text-white px-4 py-1 rounded-lg text-sm hover:opacity-90 transition"
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
+                  <li key={req.id} className="flex justify-between items-center bg-white/10 rounded-lg p-3">
+                    <span className="text-white">{req.profiles.handle}</span>
+                    <button
+                      onClick={() => acceptRequest(req.id)}
+                      className="px-4 py-1 bg-mint hover:bg-green-600 text-white rounded-lg transition"
+                    >
+                      Accept
+                    </button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
 
           {/* Friends List */}
-          <div className="bg-white/10 backdrop-blur rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-white mb-4">🤝 My Friends</h2>
+          <div className="bg-white/10 backdrop-blur rounded-xl p-6 border border-white/20">
+            <h2 className="text-xl font-semibold text-white mb-4">Your Friends</h2>
             {friends.length === 0 ? (
-              <p className="text-white/60">No friends yet. Search for friends above!</p>
+              <p className="text-white/60">No friends yet</p>
             ) : (
-              <div className="grid gap-2">
-                {friends.map((friend) => (
-                  <div
-                    key={friend.id}
-                    className="bg-white/20 rounded-xl p-4"
-                  >
-                    <span className="text-white font-medium">@{friend.handle}</span>
-                  </div>
+              <ul className="space-y-2">
+                {friends.map((f) => (
+                  <li key={f.id} className="bg-white/10 rounded-lg p-3 text-white">
+                    {f.handle}
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
           </div>
         </div>
