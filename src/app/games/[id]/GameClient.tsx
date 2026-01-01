@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import AuthGate from "@/components/AuthGate";
 import { DeviceFrame, DeviceType } from "@/interfaces/components/DeviceFrame";
 import { supabase } from "@/lib/supabase";
@@ -29,6 +29,27 @@ const deviceOptions: { value: DeviceType; label: string; icon: string }[] = [
   { value: "1440p", label: "1440p", icon: "🖥️" },
 ];
 
+/**
+ * Sandbox configuration for game iframes
+ * 
+ * Security considerations for a kids' game platform:
+ * - allow-scripts: Required for games to run JavaScript
+ * - allow-pointer-lock: Allows FPS/shooter games to capture mouse
+ * - allow-same-origin: Required for keyboard events to work properly with srcDoc
+ * 
+ * Blocked (for security):
+ * - allow-forms: Games shouldn't submit forms
+ * - allow-popups: Prevents opening new windows/tabs
+ * - allow-top-navigation: Prevents redirecting the parent page
+ * - allow-downloads: Prevents file downloads
+ * - allow-modals: Prevents alert/confirm/prompt dialogs
+ * 
+ * Note: allow-same-origin is safe here because we use srcDoc (inline HTML),
+ * not an external URL. The iframe cannot access parent cookies/storage
+ * because it has no actual origin - it's a data URL origin.
+ */
+const GAME_SANDBOX = "allow-scripts allow-same-origin allow-pointer-lock";
+
 export default function GameClient({ gameId }: { gameId: string }) {
   const [game, setGame] = useState<Game | null>(null);
   const [revisions, setRevisions] = useState<Rev[]>([]);
@@ -41,6 +62,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
   const [viewMode, setViewMode] = useState<ViewMode>("preview");
   const [showRevisions, setShowRevisions] = useState(false);
   const [runKey, setRunKey] = useState(0);
+  const [isGameFocused, setIsGameFocused] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -81,13 +103,34 @@ export default function GameClient({ gameId }: { gameId: string }) {
   // Focus iframe when switching to preview mode or when game refreshes
   useEffect(() => {
     if (viewMode === "preview" && iframeRef.current) {
-      // Small delay to ensure iframe is loaded
       const timer = setTimeout(() => {
-        iframeRef.current?.focus();
-      }, 100);
+        focusGame();
+      }, 300); // Longer delay to ensure iframe content is loaded
       return () => clearTimeout(timer);
     }
   }, [viewMode, runKey]);
+
+  // Track focus state
+  useEffect(() => {
+    const handleFocusIn = () => {
+      if (document.activeElement === iframeRef.current) {
+        setIsGameFocused(true);
+      }
+    };
+    const handleFocusOut = (e: FocusEvent) => {
+      if (e.target === iframeRef.current) {
+        setIsGameFocused(false);
+      }
+    };
+    
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
 
   const selectedRevision = useMemo(
     () => revisions.find((r) => r.id === selectedRevisionId),
@@ -142,9 +185,18 @@ export default function GameClient({ gameId }: { gameId: string }) {
     setRunKey((k) => k + 1);
   };
 
-  const focusGame = () => {
-    iframeRef.current?.focus();
-  };
+  const focusGame = useCallback(() => {
+    if (iframeRef.current) {
+      iframeRef.current.focus();
+      // Also try to focus the iframe's content window
+      try {
+        iframeRef.current.contentWindow?.focus();
+      } catch (e) {
+        // May fail due to cross-origin restrictions, but that's okay
+      }
+      setIsGameFocused(true);
+    }
+  }, []);
 
   if (!game) {
     return (
@@ -217,11 +269,21 @@ export default function GameClient({ gameId }: { gameId: string }) {
                 ))}
               </div>
               
+              {/* Focus Status Indicator */}
+              <div className={`mb-2 px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                isGameFocused 
+                  ? "bg-green-500 text-white" 
+                  : "bg-yellow-500 text-black"
+              }`}>
+                {isGameFocused ? "🎮 Game Active - Use WASD/Arrows to play!" : "⚠️ Click game to enable controls"}
+              </div>
+              
               {/* Game Preview - Click to focus for keyboard controls */}
               <div 
-                className="relative cursor-pointer group"
+                className={`relative cursor-pointer transition-all ${
+                  isGameFocused ? "ring-4 ring-green-400 ring-opacity-50" : ""
+                }`}
                 onClick={focusGame}
-                title="Click to enable keyboard controls (WASD, Arrows, Space, etc.)"
               >
                 <DeviceFrame device={device}>
                   <iframe
@@ -229,17 +291,13 @@ export default function GameClient({ gameId }: { gameId: string }) {
                     key={runKey}
                     srcDoc={code}
                     className="w-full h-full border-0"
-                    sandbox="allow-scripts"
+                    sandbox={GAME_SANDBOX}
                     title="Game Preview"
                     tabIndex={0}
+                    allow="autoplay"
+                    onLoad={focusGame}
                   />
                 </DeviceFrame>
-                {/* Focus hint overlay - shows on hover */}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-end justify-center pb-4 pointer-events-none">
-                  <span className="bg-black/70 text-white text-xs px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                    Click to enable keyboard controls
-                  </span>
-                </div>
               </div>
 
               {/* Controls */}
@@ -252,10 +310,19 @@ export default function GameClient({ gameId }: { gameId: string }) {
                 </button>
                 <button
                   onClick={focusGame}
-                  className="bg-white/20 text-white px-6 py-2 rounded-lg hover:bg-white/30 transition font-medium"
+                  className={`px-6 py-2 rounded-lg transition font-medium ${
+                    isGameFocused
+                      ? "bg-green-500/20 text-green-200 border border-green-400"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
                 >
-                  🎮 Focus Game
+                  🎮 {isGameFocused ? "Focused!" : "Focus Game"}
                 </button>
+              </div>
+              
+              {/* Keyboard Controls Help */}
+              <div className="mt-4 text-white/70 text-sm text-center">
+                <p>🎹 <strong>Controls:</strong> WASD or Arrow Keys to move • Space to jump/action</p>
               </div>
             </div>
           ) : (
