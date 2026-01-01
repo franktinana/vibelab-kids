@@ -1,61 +1,91 @@
 'use client';
-
 import React, { ReactNode } from 'react';
 
-type DeviceType = 'mobile' | '720p' | '1080p' | '1440p';
+export type DeviceType = 'mobile' | '720p' | '1080p' | '1440p';
+export type Orientation = 'portrait' | 'landscape';
 
 interface DeviceFrameProps {
   device: DeviceType;
+  orientation?: Orientation;
+  showTouchIndicator?: boolean;
   children: ReactNode;
 }
 
-// Actual screen dimensions in pixels with scale factors to fit on screen
-const deviceDimensions: Record<DeviceType, { width: number; height: number; scale: number }> = {
-  mobile: { width: 390, height: 844, scale: 0.7 },    // iPhone 14 size
-  '720p': { width: 1280, height: 720, scale: 0.65 },  // HD 720p
-  '1080p': { width: 1920, height: 1080, scale: 0.5 }, // Full HD 1080p
-  '1440p': { width: 2560, height: 1440, scale: 0.38 }, // Quad HD 1440p
+// Device dimensions with orientation support
+const getDeviceDimensions = (device: DeviceType, orientation: Orientation) => {
+  const dimensions: Record<DeviceType, { width: number; height: number; scale: number }> = {
+    mobile: { width: 390, height: 844, scale: 0.7 },
+    '720p': { width: 1280, height: 720, scale: 0.65 },
+    '1080p': { width: 1920, height: 1080, scale: 0.5 },
+    '1440p': { width: 2560, height: 1440, scale: 0.38 },
+  };
+  
+  const dim = dimensions[device];
+  
+  // Swap width/height for landscape on mobile
+  if (device === 'mobile' && orientation === 'landscape') {
+    return { width: dim.height, height: dim.width, scale: dim.scale };
+  }
+  
+  return dim;
 };
 
 const deviceLabels: Record<DeviceType, string> = {
-  mobile: '📱 Mobile (390×844)',
+  mobile: '📱 Mobile',
   '720p': '💻 720p (1280×720)',
   '1080p': '🖥️ 1080p (1920×1080)',
   '1440p': '🖥️ 1440p (2560×1440)',
 };
 
-export const DeviceFrame: React.FC<DeviceFrameProps> = ({ device, children }) => {
-  const { width, height, scale } = deviceDimensions[device];
-  
-  // Calculate scaled dimensions for container
-  const scaledWidth = width * scale;
-  const scaledHeight = height * scale;
+export function DeviceFrame({ 
+  device, 
+  orientation = 'portrait',
+  showTouchIndicator = false,
+  children 
+}: DeviceFrameProps) {
+  const { width, height, scale } = getDeviceDimensions(device, orientation);
+  const isMobile = device === 'mobile';
+  const isLandscape = orientation === 'landscape';
 
-  if (device === 'mobile') {
-    // Mobile phone frame with notch
+  // Mobile frame styling
+  if (isMobile) {
     return (
       <div 
-        className="relative bg-black rounded-[3rem] p-3 shadow-2xl"
+        className="relative bg-gray-900 rounded-[3rem] p-3 shadow-2xl"
         style={{ 
-          width: `${scaledWidth + 24}px`,
-          height: `${scaledHeight + 24}px`
+          width: (isLandscape ? height : width) * scale + 24,
+          height: (isLandscape ? width : height) * scale + 24,
         }}
       >
-        {/* Notch */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-b-2xl z-10" />
-        {/* Screen container */}
+        {/* Notch - positioned based on orientation */}
         <div 
-          className="relative bg-white rounded-[2.5rem] overflow-hidden"
-          style={{
-            width: `${scaledWidth}px`,
-            height: `${scaledHeight}px`
+          className={`absolute bg-black rounded-full z-10 ${
+            isLandscape 
+              ? 'left-1/2 top-2 -translate-x-1/2 w-24 h-6' 
+              : 'left-1/2 top-2 -translate-x-1/2 w-24 h-6'
+          }`}
+        />
+        
+        {/* Screen */}
+        <div 
+          className="bg-black rounded-[2.5rem] overflow-hidden relative"
+          style={{ 
+            width: width * scale,
+            height: height * scale,
           }}
         >
-          {/* Actual content at full resolution, scaled down */}
-          <div
-            style={{
-              width: `${width}px`,
-              height: `${height}px`,
+          {/* Touch indicator overlay */}
+          {showTouchIndicator && (
+            <div className="absolute top-2 right-2 z-20 bg-yellow-500/80 text-black text-xs px-2 py-1 rounded-full font-medium">
+              👆 Touch Mode
+            </div>
+          )}
+          
+          {/* Content scaled to fit */}
+          <div 
+            style={{ 
+              width: width,
+              height: height,
               transform: `scale(${scale})`,
               transformOrigin: 'top left',
             }}
@@ -63,44 +93,49 @@ export const DeviceFrame: React.FC<DeviceFrameProps> = ({ device, children }) =>
             {children}
           </div>
         </div>
+        
+        {/* Home indicator */}
+        <div className={`absolute bg-white/30 rounded-full ${
+          isLandscape
+            ? 'right-2 top-1/2 -translate-y-1/2 w-1 h-24'
+            : 'bottom-2 left-1/2 -translate-x-1/2 w-24 h-1'
+        }`} />
       </div>
     );
   }
 
-  // Desktop/Laptop frame (browser window style)
+  // Desktop/Laptop frame styling (720p, 1080p, 1440p)
   return (
     <div 
-      className="bg-gray-800 rounded-lg shadow-2xl overflow-hidden"
-      style={{
-        width: `${scaledWidth + 8}px`,
-        height: `${scaledHeight + 36}px`
+      className="bg-gray-800 rounded-lg overflow-hidden shadow-2xl"
+      style={{ 
+        width: width * scale,
       }}
     >
       {/* Browser chrome */}
-      <div className="h-8 bg-gray-700 flex items-center px-3 gap-2">
-        <div className="flex gap-1.5">
+      <div className="bg-gray-700 px-4 py-2 flex items-center gap-3">
+        <div className="flex gap-2">
           <div className="w-3 h-3 rounded-full bg-red-500" />
           <div className="w-3 h-3 rounded-full bg-yellow-500" />
           <div className="w-3 h-3 rounded-full bg-green-500" />
         </div>
-        <div className="flex-1 bg-gray-600 rounded h-5 mx-2 flex items-center justify-center">
-          <span className="text-gray-400 text-xs">{deviceLabels[device]}</span>
+        <div className="flex-1 bg-gray-600 rounded px-3 py-1 text-gray-300 text-sm">
+          {deviceLabels[device]}
         </div>
       </div>
-      {/* Screen container */}
+      
+      {/* Screen content */}
       <div 
-        className="bg-white overflow-hidden"
-        style={{
-          width: `${scaledWidth + 8}px`,
-          height: `${scaledHeight}px`,
-          padding: '4px'
+        className="bg-black overflow-hidden"
+        style={{ 
+          width: width * scale,
+          height: height * scale,
         }}
       >
-        {/* Actual content at full resolution, scaled down */}
-        <div
-          style={{
-            width: `${width}px`,
-            height: `${height}px`,
+        <div 
+          style={{ 
+            width: width,
+            height: height,
             transform: `scale(${scale})`,
             transformOrigin: 'top left',
           }}
@@ -110,6 +145,6 @@ export const DeviceFrame: React.FC<DeviceFrameProps> = ({ device, children }) =>
       </div>
     </div>
   );
-};
+}
 
-export type { DeviceType };
+export { DeviceFrame as default };
