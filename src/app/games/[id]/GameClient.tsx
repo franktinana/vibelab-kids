@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import AuthGate from "@/components/AuthGate";
 import { DeviceFrame, DeviceType, Orientation } from "@/interfaces/components/DeviceFrame";
 import { supabase } from "@/lib/supabase";
+import { injectGameMessaging } from "@/lib/sandbox";
 import { useGameMessages } from "@/interfaces/hooks/useGameMessages";
 import GameErrorBoundary from "@/interfaces/components/GameErrorBoundary";
 
@@ -375,7 +376,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
                   <iframe
                     ref={iframeRef}
                     key={runKey}
-                    srcDoc={code}
+                    srcDoc={injectGameMessaging(code)}
                     className="w-full h-full border-0"
                     sandbox={GAME_SANDBOX}
                     title="Game Preview"

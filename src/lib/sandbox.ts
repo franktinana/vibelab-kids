@@ -48,3 +48,42 @@ export function wrapHtmlForSandbox(userHtml: string): string {
 
   return html;
 }
+
+
+// VibeLab Game Messaging Script - injected into game iframes for save/restore
+const GAME_MESSAGING_SCRIPT = `
+<script>
+(function() {
+  window.parent.postMessage({ type: 'GAME_READY', timestamp: Date.now() }, '*');
+    window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'LOAD_STATE' && e.data.state) {
+              try {
+                      var state = JSON.parse(e.data.state);
+                              if (typeof window.vibelabRestoreState === 'function') window.vibelabRestoreState(state);
+                                    } catch (err) { console.error('VibeLab restore error', err); }
+                                        }
+                                            if (e.data && e.data.type === 'RESET_GAME' && typeof window.vibelabResetGame === 'function') {
+                                                  window.vibelabResetGame();
+                                                      }
+                                                        });
+                                                          window.vibelabSaveState = function(state) {
+                                                              window.parent.postMessage({ type: 'GAME_STATE', state: JSON.stringify(state), timestamp: Date.now() }, '*');
+                                                                };
+                                                                  window.vibelabReportScore = function(score, level) {
+                                                                      window.parent.postMessage({ type: 'GAME_SCORE', score: score, level: level, timestamp: Date.now() }, '*');
+                                                                        };
+                                                                        })();
+                                                                        <\/script>
+                                                                        `;
+
+                                                                        /**
+                                                                         *  * Injects the VibeLab messaging script into game HTML to enable save/restore.
+                                                                          * @param html - The game HTML code
+                                                                          *  * @returns HTML with messaging script injected before </body> or appended
+                                                                           */
+                                                                           export function injectGameMessaging(html: string): string {
+                                                                             if (html.includes('</body>')) {
+                                                                                 return html.replace('</body>', GAME_MESSAGING_SCRIPT + '</body>');
+                                                                                   }
+                                                                                     return html + GAME_MESSAGING_SCRIPT;
+                                                                                     }
