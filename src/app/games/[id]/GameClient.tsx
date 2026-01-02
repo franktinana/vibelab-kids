@@ -9,6 +9,8 @@ import GameErrorBoundary from "@/interfaces/components/GameErrorBoundary";
 
 type ViewMode = "preview" | "code";
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 type Game = {
   id: string;
   title: string;
@@ -66,19 +68,31 @@ export default function GameClient({ gameId }: { gameId: string }) {
   const [showRevisions, setShowRevisions] = useState(false);
   const [runKey, setRunKey] = useState(0);
   const [isGameFocused, setIsGameFocused] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
+  const [hasSavedGame, setHasSavedGame] = useState<boolean>(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   // Game message handling for state save/load
   const { isReady: gameReady, lastError: gameError, resetGame } = useGameMessages(iframeRef, {
     onGameState: (state) => {
-      // Auto-save to localStorage with debounce
-      const now = Date.now();
-      const lastSave = parseInt(localStorage.getItem(`vibelab-last-save-${gameId}`) || '0');
-      if (now - lastSave < 5000) return; // Skip if saved within 5 seconds
-      
-      localStorage.setItem(`vibelab-last-save-${gameId}`, now.toString());
-      localStorage.setItem(`vibelab-game-state-${gameId}`, state);
-      console.log("Game state auto-saved");
-    },
+        const now = Date.now();
+        const lastSave = parseInt(localStorage.getItem(`vibelab-last-save-${gameId}`) || '0');
+        if (now - lastSave < 5000) return; // Skip if saved within 5 seconds
+        
+        setSaveStatus('saving');
+        try {
+          localStorage.setItem(`vibelab-last-save-${gameId}`, now.toString());
+          localStorage.setItem(`vibelab-game-state-${gameId}`, JSON.stringify(state));
+          setSaveStatus('saved');
+          setLastSaveTime(new Date(now).toLocaleTimeString());
+          setHasSavedGame(true);
+          setTimeout(() => setSaveStatus('idle'), 2000);
+        } catch (err) {
+          console.error('Failed to save game state:', err);
+          setSaveStatus('error');
+          setTimeout(() => setSaveStatus('idle'), 3000);
+        }
+      },
     onGameError: (error, stack) => {
       console.error("Game error:", error, stack);
     },
@@ -129,7 +143,38 @@ export default function GameClient({ gameId }: { gameId: string }) {
       const timer = setTimeout(() => {
         focusGame();
       }, 300); // Longer delay to ensure iframe content is loaded
-      return () => clearTimeout(timer);
+    
+  // Check for saved game on component mount
+  useEffect(() => {
+    const savedState = localStorage.getItem(`vibelab-game-state-${gameId}`);
+    const savedTime = localStorage.getItem(`vibelab-last-save-${gameId}`);
+    if (savedState && savedTime) {
+      setHasSavedGame(true);
+      const date = new Date(parseInt(savedTime, 10));
+      setLastSaveTime(date.toLocaleTimeString());
+    }
+  }, [gameId]);
+
+  // Restore game from last save
+  const restoreLastSave = () => {
+    const savedState = localStorage.getItem(`vibelab-game-state-${gameId}`);
+    if (savedState && iframeRef.current?.contentWindow) {
+      try {
+        const state = JSON.parse(savedState);
+        iframeRef.current.contentWindow.postMessage({
+          type: 'restore-state',
+          state
+        }, '*');
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+      } catch (err) {
+        console.error('Failed to restore game state:', err);
+        setSaveStatus('error');
+      }
+    }
+  };
+
+  return () => clearTimeout(timer);
     }
   }, [viewMode, runKey]);
 
@@ -325,7 +370,8 @@ export default function GameClient({ gameId }: { gameId: string }) {
                 }`}
                 onClick={focusGame}
               >
-                <DeviceFrame device={device} orientation={orientation}>
+                <GameErrorBoundary>
+                    <DeviceFrame device={device} orientation={orientation}>
                   <iframe
                     ref={iframeRef}
                     key={runKey}
@@ -338,6 +384,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
                     onLoad={focusGame}
                   />
                 </DeviceFrame>
+                  </GameErrorBoundary>
               </div>
 
               {/* Controls */}
