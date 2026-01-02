@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import AuthGate from "@/components/AuthGate";
 import { DeviceFrame, DeviceType, Orientation } from "@/interfaces/components/DeviceFrame";
 import { supabase } from "@/lib/supabase";
+import { useGameMessages } from "@/interfaces/hooks/useGameMessages";
+import GameErrorBoundary from "@/interfaces/components/GameErrorBoundary";
 
 type ViewMode = "preview" | "code";
 
@@ -65,6 +67,19 @@ export default function GameClient({ gameId }: { gameId: string }) {
   const [runKey, setRunKey] = useState(0);
   const [isGameFocused, setIsGameFocused] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  // Game message handling for state save/load
+  const { isReady: gameReady, lastError: gameError, resetGame } = useGameMessages(iframeRef, {
+    onGameState: (state) => {
+      console.log("Game state saved:", state.substring(0, 100));
+    },
+    onGameError: (error, stack) => {
+      console.error("Game error:", error, stack);
+    },
+    onGameReady: () => {
+      console.log("Game is ready");
+    },
+  });
+
 
   useEffect(() => {
     async function load() {
