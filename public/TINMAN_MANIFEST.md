@@ -1,9 +1,9 @@
 # TinMan Codebase Manifest
 ## Metadata
-- **Generated:** 2026-01-01 08:35:01 UTC
+- **Generated:** 2026-01-02 15:52:17 UTC
 - **Repo:** vibelab-kids
 - **Branch:** main
-- **Commit:** 8b592e4
+- **Commit:** 86d1196
 - **App Router Dir:** src/app
 
 ## Directory Skeleton (maxdepth=3)
@@ -43,6 +43,7 @@ tsconfig.json
 src
 src/interfaces
 src/interfaces/components
+src/interfaces/hooks
 src/components
 src/components/AuthGate.tsx
 src/components/SandboxPlayer.tsx
@@ -59,6 +60,7 @@ src/app/layout.tsx
 src/app/favicon.ico
 src/app/page.tsx
 src/core
+src/core/types
 src/core/entities
 src/core/repositories
 src/infrastructure
