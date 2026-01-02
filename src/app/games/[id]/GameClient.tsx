@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import AuthGate from "@/components/AuthGate";
-import { DeviceFrame, DeviceType } from "@/interfaces/components/DeviceFrame";
+import { DeviceFrame, DeviceType, Orientation } from "@/interfaces/components/DeviceFrame";
 import { supabase } from "@/lib/supabase";
 
 type ViewMode = "preview" | "code";
@@ -59,6 +59,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
   const [isOwner, setIsOwner] = useState(false);
   const [shareEmail, setShareEmail] = useState("");
   const [device, setDevice] = useState<DeviceType>("1080p");
+  const [orientation, setOrientation] = useState<Orientation>("portrait");
   const [viewMode, setViewMode] = useState<ViewMode>("preview");
   const [showRevisions, setShowRevisions] = useState(false);
   const [runKey, setRunKey] = useState(0);
@@ -265,6 +266,23 @@ export default function GameClient({ gameId }: { gameId: string }) {
                     }`}
                   >
                     {opt.icon} {opt.label}
+              {/* Orientation Toggle - Only for Mobile */}
+              {device === "mobile" && (
+                <div className="flex gap-2 mb-4">
+                  <button
+                    onClick={() => setOrientation("portrait")}
+                    className={orientation === "portrait" ? "px-4 py-2 rounded-lg bg-white text-ink" : "px-4 py-2 rounded-lg bg-white/20 text-white hover:bg-white/30"}
+                  >
+                    📱 Portrait
+                  </button>
+                  <button
+                    onClick={() => setOrientation("landscape")}
+                    className={orientation === "landscape" ? "px-4 py-2 rounded-lg bg-white text-ink" : "px-4 py-2 rounded-lg bg-white/20 text-white hover:bg-white/30"}
+                  >
+                    📱 Landscape
+                  </button>
+                </div>
+              )}
                   </button>
                 ))}
               </div>
@@ -285,7 +303,7 @@ export default function GameClient({ gameId }: { gameId: string }) {
                 }`}
                 onClick={focusGame}
               >
-                <DeviceFrame device={device}>
+                <DeviceFrame device={device} orientation={orientation}>
                   <iframe
                     ref={iframeRef}
                     key={runKey}
