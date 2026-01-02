@@ -70,7 +70,14 @@ export default function GameClient({ gameId }: { gameId: string }) {
   // Game message handling for state save/load
   const { isReady: gameReady, lastError: gameError, resetGame } = useGameMessages(iframeRef, {
     onGameState: (state) => {
-      console.log("Game state saved:", state.substring(0, 100));
+      // Auto-save to localStorage with debounce
+      const now = Date.now();
+      const lastSave = parseInt(localStorage.getItem(`vibelab-last-save-${gameId}`) || '0');
+      if (now - lastSave < 5000) return; // Skip if saved within 5 seconds
+      
+      localStorage.setItem(`vibelab-last-save-${gameId}`, now.toString());
+      localStorage.setItem(`vibelab-game-state-${gameId}`, state);
+      console.log("Game state auto-saved");
     },
     onGameError: (error, stack) => {
       console.error("Game error:", error, stack);
